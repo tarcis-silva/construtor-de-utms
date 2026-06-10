@@ -228,9 +228,21 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
+    margin-bottom: 18px;
+  }
+  .row .field {
+    margin-bottom: 0;
   }
   @media (max-width: 540px) {
     .row { grid-template-columns: 1fr; }
+  }
+
+  @keyframes field-highlight {
+    0% { border-color: var(--accent); }
+    100% { border-color: var(--input-border); }
+  }
+  .field-highlight {
+    animation: field-highlight 2s ease-out;
   }
 
   .normalized-preview {
@@ -640,6 +652,25 @@
     return div.innerHTML;
   }
 
+  function smoothScrollTo(targetY, duration) {
+    const startY = window.scrollY;
+    const diff = targetY - startY;
+    const startTime = performance.now();
+    function step(now) {
+      const progress = Math.min((now - startTime) / duration, 1);
+      const ease = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+      window.scrollTo(0, startY + diff * ease);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function flashField(el) {
+    el.classList.remove('field-highlight');
+    void el.offsetWidth;
+    el.classList.add('field-highlight');
+  }
+
   function renderPresets(list, container) {
     list.forEach(function (preset, idx) {
       const btn = document.createElement('button');
@@ -653,8 +684,14 @@
         document.querySelectorAll('.preset-btn').forEach(function (b) { b.classList.remove('active'); });
         btn.classList.add('active');
         update();
-        urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        urlInput.focus();
+        flashField(sourceSelect);
+        flashField(mediumSelect);
+        flashField(sourceCustom);
+        flashField(mediumCustom);
+        const rect = urlInput.getBoundingClientRect();
+        const targetY = window.scrollY + rect.top - (window.innerHeight - rect.height) / 2;
+        smoothScrollTo(targetY, 600);
+        setTimeout(function () { urlInput.focus(); }, 250);
       });
       container.appendChild(btn);
     });
