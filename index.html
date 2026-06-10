@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Construtor de UTMs - Links parametrizados</title>
+<meta name="description" content="Gere links com parâmetros UTM corretos para o Google Analytics 4. Gratuito, sem cadastro e sem coleta de dados." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1e1e1e;
+    --bg-soft: #262625;
+    --card: #303130;
+    --border: #3a3a3a;
+    --text: #fafafa;
+    --text-muted: #bababa;
+    --accent: #ffcf09;
+    --accent-hover: #ebbf09;
+    --accent-text: #2a2a29;
+    --accent-disabled-bg: #4a4226;
+    --accent-disabled-text: #8c8470;
+    --input-bg: #1e1e1e;
+    --input-border: #4a4a49;
+    --danger: #ff6b6b;
+    --shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+
+  html[data-theme="light"] {
+    --bg: #f9f3e1;
+    --bg-soft: #fffdf7;
+    --card: #ffffff;
+    --border: #e7decb;
+    --text: #2a2a29;
+    --text-muted: #756f60;
+    --accent: #ffcf09;
+    --accent-hover: #f0c200;
+    --accent-text: #2a2a29;
+    --accent-disabled-bg: #f7eec7;
+    --accent-disabled-text: #c2b487;
+    --input-bg: #ffffff;
+    --input-border: #ddd3bd;
+    --danger: #d64545;
+    --shadow: 0 8px 24px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  header.top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  header.top h1 {
+    font-size: clamp(24px, 5vw, 34px);
+    font-weight: 600;
+    margin: 0;
+    color: var(--text);
+  }
+
+  header.top .subtitle {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .theme-toggle {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .theme-toggle:hover { transform: scale(1.06); }
+
+  .intro {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin: 24px 0;
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+  .intro strong { color: var(--text); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+
+  .card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 14px;
+    color: var(--text);
+  }
+
+  .presets-hint {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+  }
+
+  .preset-btn .paren {
+    font-size: 11px;
+  }
+
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .preset-btn {
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.25;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .preset-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-text);
+    background: var(--accent);
+  }
+  .preset-btn.active {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--accent-text);
+  }
+
+  .field {
+    margin-bottom: 18px;
+  }
+  .field:last-child { margin-bottom: 0; }
+
+  .field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .field .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  .field input[type="text"],
+  .field input[type="url"],
+  .field select {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .field input[type="text"]:focus,
+  .field input[type="url"]:focus,
+  .field select:focus {
+    border-color: var(--accent);
+  }
+
+  #urlInput {
+    border: 2px solid var(--accent);
+  }
+
+  .field select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23bababa' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 540px) {
+    .row { grid-template-columns: 1fr; }
+  }
+
+  .normalized-preview {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+  }
+  .normalized-preview span {
+    color: var(--accent);
+  }
+
+  details.advanced {
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  details.advanced summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  details.advanced summary::-webkit-details-marker { display: none; }
+  details.advanced summary::before {
+    content: "▸";
+    transition: transform 0.15s ease;
+    font-size: 11px;
+  }
+  details.advanced[open] summary::before {
+    transform: rotate(90deg);
+  }
+  details.advanced .field {
+    margin-top: 16px;
+  }
+
+  .result-box {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    word-break: break-all;
+    color: var(--text);
+    margin-bottom: 12px;
+    min-height: 22px;
+  }
+  .result-box.empty {
+    color: var(--text-muted);
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 24px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    background: var(--accent);
+    color: var(--accent-text);
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:disabled {
+    background: var(--accent-disabled-bg);
+    color: var(--accent-disabled-text);
+    cursor: not-allowed;
+    opacity: 1;
+  }
+  .btn:disabled:hover {
+    background: var(--accent-disabled-bg);
+  }
+  .btn.secondary {
+    background: transparent;
+    border: 1px solid var(--input-border);
+    color: var(--text);
+  }
+  .btn.secondary:hover {
+    border-color: var(--accent);
+    background: transparent;
+  }
+  .btn.small {
+    padding: 7px 14px;
+    font-size: 13px;
+  }
+  .btn.danger-text {
+    background: transparent;
+    color: var(--danger);
+    padding: 7px 10px;
+  }
+  .btn.danger-text:hover {
+    background: transparent;
+    opacity: 0.75;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .history-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .history-item .meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .history-item .link-text {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    word-break: break-all;
+    margin-bottom: 8px;
+  }
+  .history-item .item-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .history-empty {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 12px 0;
+  }
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .history-header h2 { margin: 0; }
+
+  footer.promo {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    font-size: 14px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  footer.promo p { margin: 0 0 12px; }
+  footer.promo p:last-child { margin-bottom: 0; }
+  footer.promo a {
+    color: var(--accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  footer.promo a:hover { text-decoration: underline; }
+  footer.promo .name {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .small-print {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 18px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 999px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: var(--shadow);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <h1>Construtor de UTMs</h1>
+      <div class="subtitle">Links parametrizados</div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">🌙</button>
+  </header>
+
+  <div class="intro">
+    <strong>Esta ferramenta é gratuita e não armazena nenhum dado.</strong> Tudo o que você gera fica apenas no seu navegador, nada é enviado para nenhum servidor.<br><br>
+    Preencha os campos abaixo para montar um link com os parâmetros UTM corretos para serem analisados no Google Analytics 4.
+  </div>
+
+  <div class="card">
+    <h2 style="margin-bottom: 4px;">Atalhos rápidos</h2>
+    <div class="presets-hint">Selecione a plataforma na qual o link será usado</div>
+    <div class="presets" id="presets"></div>
+
+    <details class="advanced">
+      <summary>Conteúdo orgânico</summary>
+      <div class="presets" id="presetsOrganic" style="margin-top: 16px;"></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Dados do link</h2>
+
+    <div class="field">
+      <label for="urlInput">URL do site ou página de destino</label>
+      <input type="url" id="urlInput" placeholder="https://seusite.com.br/pagina" />
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="sourceSelect">Origem (utm_source)</label>
+        <select id="sourceSelect">
+          <option value="google">google</option>
+          <option value="facebook">facebook</option>
+          <option value="instagram">instagram</option>
+          <option value="meta">meta</option>
+          <option value="linkedin">linkedin</option>
+          <option value="tiktok">tiktok</option>
+          <option value="youtube">youtube</option>
+          <option value="pinterest">pinterest</option>
+          <option value="email">email</option>
+          <option value="whatsapp">whatsapp</option>
+          <option value="outro">Outro (personalizado)</option>
+        </select>
+        <input type="text" id="sourceCustom" placeholder="Digite a origem" style="display:none; margin-top:8px;" />
+        <div class="hint">De onde vem o tráfego: google, facebook, instagram, meta (campanhas combinadas Facebook + Instagram), linkedin, etc.</div>
+      </div>
+
+      <div class="field">
+        <label for="mediumSelect">Mídia (utm_medium)</label>
+        <select id="mediumSelect">
+          <option value="cpc">cpc</option>
+          <option value="social">social</option>
+          <option value="email">email</option>
+          <option value="display">display</option>
+          <option value="referral">referral</option>
+          <option value="affiliate">affiliate</option>
+          <option value="organic">organic</option>
+          <option value="sms">sms</option>
+          <option value="outro">Outro (personalizado)</option>
+        </select>
+        <input type="text" id="mediumCustom" placeholder="Digite a mídia" style="display:none; margin-top:8px;" />
+        <div class="hint">Tipo de tráfego: cpc para anúncios pagos, social para posts orgânicos, email, etc.</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="campaignInput">Nome da campanha (utm_campaign)</label>
+      <input type="text" id="campaignInput" placeholder="Ex: Lançamento Coleção Inverno" />
+      <div class="normalized-preview" id="campaignPreview"></div>
+    </div>
+
+    <div class="field">
+      <label for="contentInput">Conteúdo do anúncio (utm_content) <span style="color:var(--text-muted); font-weight:400;">- opcional</span></label>
+      <input type="text" id="contentInput" placeholder="Ex: feed-instagram ou banner-topo" />
+      <div class="normalized-preview" id="contentPreview"></div>
+    </div>
+
+    <details class="advanced">
+      <summary>Campos avançados (opcionais)</summary>
+      <div class="field">
+        <label for="termInput">Termo (utm_term)</label>
+        <input type="text" id="termInput" placeholder="Ex: tenis-corrida" />
+        <div class="normalized-preview" id="termPreview"></div>
+        <div class="hint">Usado normalmente para palavras-chave em campanhas de busca paga.</div>
+      </div>
+      <div class="field">
+        <label for="idInput">ID da campanha (utm_id)</label>
+        <input type="text" id="idInput" placeholder="Ex: 2026-06-promo-inverno" />
+        <div class="normalized-preview" id="idPreview"></div>
+        <div class="hint">Identificador interno da campanha, se você usar algum.</div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Link gerado</h2>
+    <div class="result-box empty" id="resultBox">Preencha a URL e a campanha para gerar o link.</div>
+    <div class="actions">
+      <button class="btn" id="copyBtn" disabled>Copiar link</button>
+      <button class="btn secondary" id="resetBtn">Limpar campos</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="history-header">
+      <h2>Histórico local</h2>
+      <button class="btn danger-text small" id="clearHistoryBtn">Limpar histórico</button>
+    </div>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">Nenhum link salvo ainda. Links copiados aparecem aqui (salvos só no seu navegador).</div>
+    </div>
+  </div>
+
+  <footer class="promo">
+    <p>Essa ferramenta foi criada por <span class="name">Tarcisio Silva</span> e será sempre gratuita.</p>
+    <p>
+      Se você deseja ir além da organização dos links e entender os resultados das suas ações digitais,
+      estruturar a mensuração ou repensar a estratégia das suas campanhas, pode falar comigo no
+      <a href="https://www.linkedin.com/in/tarcis/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      ou pelo e-mail <a href="mailto:contato@tarsgamestudio.com">contato@tarsgamestudio.com</a>
+      (sim, além de marketing digital também faço <a href="https://tarsgamestudio.com/" target="_blank" rel="noopener noreferrer">jogos</a> 🤓).
+    </p>
+  </footer>
+
+  <div class="small-print">Nenhum dado é coletado ou enviado a servidores. O histórico fica salvo apenas neste navegador (localStorage).</div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  // ---------- Theme ----------
+  const THEME_KEY = 'utmBuilderTheme';
+  const root = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+
+  function applyTheme(theme) {
+    root.setAttribute('data-theme', theme);
+    themeToggle.textContent = theme === 'dark' ? '🌙' : '☀️';
+  }
+
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+
+  themeToggle.addEventListener('click', function () {
+    const current = root.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    localStorage.setItem(THEME_KEY, next);
+  });
+
+  // ---------- Presets ----------
+  const PRESETS = [
+    { label: 'Google Ads', source: 'google', medium: 'cpc' },
+    { label: 'Google Ads (YouTube)', source: 'youtube', medium: 'cpc' },
+    { label: 'Meta Ads (Facebook + Instagram)', source: 'meta', medium: 'cpc' },
+    { label: 'Meta Ads (Facebook)', source: 'facebook', medium: 'cpc' },
+    { label: 'Meta Ads (Instagram)', source: 'instagram', medium: 'cpc' },
+    { label: 'LinkedIn Ads', source: 'linkedin', medium: 'cpc' },
+    { label: 'TikTok Ads', source: 'tiktok', medium: 'cpc' },
+    { label: 'E-mail marketing', source: 'email', medium: 'email' },
+  ];
+
+  const PRESETS_ORGANIC = [
+    { label: 'Instagram', source: 'instagram', medium: 'social' },
+    { label: 'Facebook', source: 'facebook', medium: 'social' },
+    { label: 'TikTok', source: 'tiktok', medium: 'social' },
+    { label: 'YouTube', source: 'youtube', medium: 'social' },
+    { label: 'LinkedIn', source: 'linkedin', medium: 'social' },
+    { label: 'Pinterest', source: 'pinterest', medium: 'social' },
+    { label: 'WhatsApp', source: 'whatsapp', medium: 'social' },
+    { label: 'E-mail / Newsletter', source: 'email', medium: 'email' },
+  ];
+
+  const presetsContainer = document.getElementById('presets');
+  const presetsOrganicContainer = document.getElementById('presetsOrganic');
+  const sourceSelect = document.getElementById('sourceSelect');
+  const mediumSelect = document.getElementById('mediumSelect');
+  const sourceCustom = document.getElementById('sourceCustom');
+  const mediumCustom = document.getElementById('mediumCustom');
+
+  function presetLabelHtml(label) {
+    const match = label.match(/^(.*?)\s*(\(.*\))$/);
+    if (match) {
+      return '<span class="preset-label">' + escapeHtml(match[1]) + '<br><span class="paren">' + escapeHtml(match[2]) + '</span></span>';
+    }
+    return escapeHtml(label);
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function renderPresets(list, container) {
+    list.forEach(function (preset, idx) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'preset-btn';
+      btn.innerHTML = presetLabelHtml(preset.label);
+      btn.dataset.idx = idx;
+      btn.addEventListener('click', function () {
+        setSelectValue(sourceSelect, sourceCustom, preset.source);
+        setSelectValue(mediumSelect, mediumCustom, preset.medium);
+        document.querySelectorAll('.preset-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        update();
+        urlInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        urlInput.focus();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  renderPresets(PRESETS, presetsContainer);
+  renderPresets(PRESETS_ORGANIC, presetsOrganicContainer);
+
+  function setSelectValue(select, customInput, value) {
+    const hasOption = Array.from(select.options).some(function (o) { return o.value === value; });
+    if (hasOption) {
+      select.value = value;
+      customInput.style.display = 'none';
+    } else {
+      select.value = 'outro';
+      customInput.style.display = 'block';
+      customInput.value = value;
+    }
+  }
+
+  [sourceSelect, mediumSelect].forEach(function (select) {
+    select.addEventListener('change', function () {
+      const customInput = select === sourceSelect ? sourceCustom : mediumCustom;
+      customInput.style.display = select.value === 'outro' ? 'block' : 'none';
+      document.querySelectorAll('.preset-btn').forEach(function (b) { b.classList.remove('active'); });
+      update();
+    });
+  });
+
+  // ---------- Normalization ----------
+  const ACCENT_MAP = {
+    'á':'a','à':'a','â':'a','ã':'a','ä':'a',
+    'é':'e','è':'e','ê':'e','ë':'e',
+    'í':'i','ì':'i','î':'i','ï':'i',
+    'ó':'o','ò':'o','ô':'o','õ':'o','ö':'o',
+    'ú':'u','ù':'u','û':'u','ü':'u',
+    'ç':'c','ñ':'n'
+  };
+
+  function normalize(text) {
+    if (!text) return '';
+    let t = text.toLowerCase().trim();
+    t = t.replace(/[áàâãäéèêëíìîïóòôõöúùûüçñ]/g, function (c) { return ACCENT_MAP[c] || c; });
+    t = t.replace(/%/g, '')
+         .replace(/&/g, 'e')
+         .replace(/#/g, '')
+         .replace(/@/g, '')
+         .replace(/\+/g, '-')
+         .replace(/=/g, '')
+         .replace(/\//g, '-')
+         .replace(/,/g, '')
+         .replace(/\?/g, '');
+    t = t.replace(/\s+/g, '-');
+    t = t.replace(/[^a-z0-9\-_.]/g, '');
+    t = t.replace(/-+/g, '-');
+    t = t.replace(/^-+|-+$/g, '');
+    return t;
+  }
+
+  // ---------- Build link ----------
+  const urlInput = document.getElementById('urlInput');
+  const campaignInput = document.getElementById('campaignInput');
+  const contentInput = document.getElementById('contentInput');
+  const termInput = document.getElementById('termInput');
+  const idInput = document.getElementById('idInput');
+
+  const campaignPreview = document.getElementById('campaignPreview');
+  const contentPreview = document.getElementById('contentPreview');
+  const termPreview = document.getElementById('termPreview');
+  const idPreview = document.getElementById('idPreview');
+
+  const resultBox = document.getElementById('resultBox');
+  const copyBtn = document.getElementById('copyBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  function getSelectValue(select, customInput) {
+    if (select.value === 'outro') {
+      return normalize(customInput.value);
+    }
+    return select.value;
+  }
+
+  function showPreview(el, label, value) {
+    if (!value) {
+      el.textContent = '';
+      return;
+    }
+    el.innerHTML = label + ': <span>' + value + '</span>';
+  }
+
+  function buildUrl() {
+    let raw = urlInput.value.trim();
+    if (!raw) return null;
+    if (!/^https?:\/\//i.test(raw)) {
+      raw = 'https://' + raw;
+    }
+    return raw;
+  }
+
+  let currentLink = '';
+
+  function update() {
+    const url = buildUrl();
+    const source = getSelectValue(sourceSelect, sourceCustom);
+    const medium = getSelectValue(mediumSelect, mediumCustom);
+    const campaign = normalize(campaignInput.value);
+    const content = normalize(contentInput.value);
+    const term = normalize(termInput.value);
+    const id = normalize(idInput.value);
+
+    showPreview(campaignPreview, 'utm_campaign', campaign);
+    showPreview(contentPreview, 'utm_content', content);
+    showPreview(termPreview, 'utm_term', term);
+    showPreview(idPreview, 'utm_id', id);
+
+    if (!url || !campaign || !source || !medium) {
+      resultBox.textContent = 'Preencha a URL, origem, mídia e campanha para gerar o link.';
+      resultBox.classList.add('empty');
+      copyBtn.disabled = true;
+      currentLink = '';
+      return;
+    }
+
+    const params = [];
+    params.push('utm_source=' + encodeURIComponent(source));
+    params.push('utm_medium=' + encodeURIComponent(medium));
+    params.push('utm_campaign=' + encodeURIComponent(campaign));
+    if (content) params.push('utm_content=' + encodeURIComponent(content));
+    if (term) params.push('utm_term=' + encodeURIComponent(term));
+    if (id) params.push('utm_id=' + encodeURIComponent(id));
+
+    const separator = url.indexOf('?') > -1 ? '&' : '?';
+    currentLink = url + separator + params.join('&');
+
+    resultBox.textContent = currentLink;
+    resultBox.classList.remove('empty');
+    copyBtn.disabled = false;
+  }
+
+  [urlInput, campaignInput, contentInput, termInput, idInput, sourceCustom, mediumCustom].forEach(function (el) {
+    el.addEventListener('input', update);
+  });
+
+  // ---------- Detecção de UTM já existente na URL ----------
+  function stripUtmParams(rawUrl) {
+    try {
+      const u = new URL(rawUrl);
+      const toRemove = [];
+      u.searchParams.forEach(function (_, key) {
+        if (key.toLowerCase().indexOf('utm_') === 0) toRemove.push(key);
+      });
+      toRemove.forEach(function (key) { u.searchParams.delete(key); });
+      let result = u.toString();
+      result = result.replace(/\?$/, '');
+      return result;
+    } catch (e) {
+      return rawUrl;
+    }
+  }
+
+  let lastCheckedUrl = '';
+  urlInput.addEventListener('change', function () {
+    const raw = urlInput.value.trim();
+    if (!raw || raw === lastCheckedUrl) return;
+    lastCheckedUrl = raw;
+    if (/[?&]utm_[a-z]+=/i.test(raw)) {
+      const wantsClean = window.confirm('Esse link já contém parâmetros UTM. Deseja remover esses parâmetros antes de continuar?');
+      if (wantsClean) {
+        let toClean = raw;
+        if (!/^https?:\/\//i.test(toClean)) toClean = 'https://' + toClean;
+        const cleaned = stripUtmParams(toClean);
+        urlInput.value = cleaned;
+        lastCheckedUrl = cleaned;
+        update();
+      }
+    }
+  });
+
+  resetBtn.addEventListener('click', function () {
+    [urlInput, campaignInput, contentInput, termInput, idInput, sourceCustom].forEach(function (el) { el.value = ''; });
+    sourceSelect.value = 'google';
+    mediumSelect.value = 'cpc';
+    sourceCustom.style.display = 'none';
+    mediumCustom.style.display = 'none';
+    document.querySelectorAll('.preset-btn').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelectorAll('details.advanced').forEach(function (d) { d.open = false; });
+    lastCheckedUrl = '';
+    update();
+  });
+
+  // ---------- History ----------
+  const HISTORY_KEY = 'utmBuilderHistory';
+  const MAX_HISTORY = 20;
+  const historyList = document.getElementById('historyList');
+  const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+  function getHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveHistory(items) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+  }
+
+  function formatDate(ts) {
+    const d = new Date(ts);
+    return d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderHistory() {
+    const items = getHistory();
+    historyList.innerHTML = '';
+    if (items.length === 0) {
+      historyList.innerHTML = '<div class="history-empty">Nenhum link salvo ainda. Links copiados aparecem aqui (salvos só no seu navegador).</div>';
+      return;
+    }
+    items.forEach(function (item, idx) {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = formatDate(item.date) + ' · ' + item.source + ' / ' + item.medium;
+      div.appendChild(meta);
+
+      const linkText = document.createElement('div');
+      linkText.className = 'link-text';
+      linkText.textContent = item.link;
+      div.appendChild(linkText);
+
+      const actions = document.createElement('div');
+      actions.className = 'item-actions';
+
+      const copyItemBtn = document.createElement('button');
+      copyItemBtn.className = 'btn small secondary';
+      copyItemBtn.textContent = 'Copiar';
+      copyItemBtn.addEventListener('click', function () { copyText(item.link); });
+      actions.appendChild(copyItemBtn);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn small danger-text';
+      removeBtn.textContent = 'Remover';
+      removeBtn.addEventListener('click', function () {
+        const all = getHistory();
+        all.splice(idx, 1);
+        saveHistory(all);
+        renderHistory();
+      });
+      actions.appendChild(removeBtn);
+
+      div.appendChild(actions);
+      historyList.appendChild(div);
+    });
+  }
+
+  function addToHistory(link, source, medium) {
+    const items = getHistory();
+    if (items.length && items[0].link === link) return;
+    items.unshift({ link: link, source: source, medium: medium, date: Date.now() });
+    if (items.length > MAX_HISTORY) items.length = MAX_HISTORY;
+    saveHistory(items);
+    renderHistory();
+  }
+
+  clearHistoryBtn.addEventListener('click', function () {
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistory();
+  });
+
+  // ---------- Copy ----------
+  const toast = document.getElementById('toast');
+  let toastTimeout;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(function () { toast.classList.remove('show'); }, 1800);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () {
+        showToast('Link copiado!');
+      }).catch(function () {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Link copiado!'); } catch (e) { showToast('Não foi possível copiar.'); }
+    document.body.removeChild(ta);
+  }
+
+  copyBtn.addEventListener('click', function () {
+    if (!currentLink) return;
+    copyText(currentLink);
+    const source = getSelectValue(sourceSelect, sourceCustom);
+    const medium = getSelectValue(mediumSelect, mediumCustom);
+    addToHistory(currentLink, source, medium);
+  });
+
+  // ---------- Init ----------
+  renderHistory();
+  update();
+})();
+</script>
+</body>
+</html>
