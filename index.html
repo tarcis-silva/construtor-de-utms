@@ -467,9 +467,12 @@
   <div class="card">
     <h2 style="margin-bottom: 4px;">Atalhos rápidos</h2>
     <div class="presets-hint">Selecione a plataforma na qual o link será usado</div>
-    <div class="presets" id="presets"></div>
+    <details class="advanced" id="detailsPaid">
+      <summary>Conteúdo pago</summary>
+      <div class="presets" id="presets" style="margin-top: 16px;"></div>
+    </details>
 
-    <details class="advanced">
+    <details class="advanced" id="detailsOrganic">
       <summary>Conteúdo orgânico</summary>
       <div class="presets" id="presetsOrganic" style="margin-top: 16px;"></div>
     </details>
@@ -535,7 +538,7 @@
       <div class="normalized-preview" id="contentPreview"></div>
     </div>
 
-    <details class="advanced">
+    <details class="advanced" id="detailsAdvanced">
       <summary>Campos avançados (opcionais)</summary>
       <div class="field">
         <label for="termInput">Termo (utm_term)</label>
@@ -701,6 +704,26 @@
 
   renderPresets(PRESETS, presetsContainer);
   renderPresets(PRESETS_ORGANIC, presetsOrganicContainer);
+
+  // ---------- Accordion state ----------
+  var ACCORDION_PAID_KEY = 'utmBuilderAccordionPaid';
+  var ACCORDION_ORGANIC_KEY = 'utmBuilderAccordionOrganic';
+  var detailsPaid = document.getElementById('detailsPaid');
+  var detailsOrganic = document.getElementById('detailsOrganic');
+
+  function initAccordion(el, key) {
+    var saved = localStorage.getItem(key);
+    el.open = saved === null ? true : saved === 'true';
+  }
+  initAccordion(detailsPaid, ACCORDION_PAID_KEY);
+  initAccordion(detailsOrganic, ACCORDION_ORGANIC_KEY);
+
+  detailsPaid.addEventListener('toggle', function () {
+    localStorage.setItem(ACCORDION_PAID_KEY, String(detailsPaid.open));
+  });
+  detailsOrganic.addEventListener('toggle', function () {
+    localStorage.setItem(ACCORDION_ORGANIC_KEY, String(detailsOrganic.open));
+  });
 
   function setSelectValue(select, customInput, value) {
     const hasOption = Array.from(select.options).some(function (o) { return o.value === value; });
@@ -879,7 +902,7 @@
     sourceCustom.style.display = 'none';
     mediumCustom.style.display = 'none';
     document.querySelectorAll('.preset-btn').forEach(function (b) { b.classList.remove('active'); });
-    document.querySelectorAll('details.advanced').forEach(function (d) { d.open = false; });
+    document.getElementById('detailsAdvanced').open = false;
     lastCheckedUrl = '';
     update();
   });
